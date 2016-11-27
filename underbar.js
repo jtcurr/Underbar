@@ -457,13 +457,34 @@ else{
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    var runFunction;
+    var array = [];
+      _.each(collection, function(item) {
+          if(typeof(functionOrKey) === 'function'){
+             runFunction = functionOrKey;
+          }
+          else{
+           runFunction = item[functionOrKey];
+          }
+           array.push(runFunction.apply(item, args));
+      });
+   return array;
   };
-
   // Sort the object's values by a criterion produced by an iterator.
   // If iterator is a string, sort objects by that property with the name
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
-  _.sortBy = function(collection, iterator) {
+    _.sortBy = function(collection, iterator) {
+   if(typeof(iterator) === 'function'){
+    return collection.sort(function(a,b){
+     return iterator(a) - iterator(b);
+  });
+   }
+   else{
+     return collection.sort(function(a,b){
+     return a[iterator]-b[iterator];
+  });
+   }
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -471,31 +492,116 @@ else{
   //
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
-  _.zip = function() {
+     _.zip = function() {
+    var greatest = 0;
+    var arr = [];
+    var y = 1;
+
+    for (var i in arguments) {
+      if (arguments[i].length > greatest) {
+        greatest = arguments[i].length;
+      }
+    }
+    for (var x = 0; x < greatest; x++) {
+      arr.push(_.pluck(arguments, x));
+    }
+    return arr;
   };
+
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
   // The new array should contain all elements of the multidimensional array.
   //
   // Hint: Use Array.isArray to check if something is an array
-  _.flatten = function(nestedArray, result) {
+    _.flatten = function(nestedArray, result) {
+    var flatted = [];
+    var func = function(array){
+      _.each(array, function(element){
+        if(Array.isArray(element)){
+        func(element);
+        }
+        else{
+        flatted.push(element);
+        }
+      }
+    )};
+    func(nestedArray);
+    return flatted;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
-  _.intersection = function() {
+ _.intersection = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var arg = [];
+    var obj = {};
+
+    for (var i = 0; i < args.length; i++) {
+      _.each(args[i], function(item) {
+        (obj[item]) ? obj[item]++ : obj[item] = 1;
+      });
+    }
+    
+    for (var key in obj) {
+      if (obj[key] === args.length) {
+        arg.push(key);
+      }
+    }
+
+    return arg;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
-  _.difference = function(array) {
+ _.difference = function(array) {
+   var args = Array.prototype.slice.call(arguments);
+  var arg = [];
+  var array1 = args[0];
+  var obj = {};
+  var newArg = args.slice(1);
+
+    for(var i = 0; i < array1.length; i++){
+      if (obj[array1[i]] === undefined) {
+        obj[array1[i]] = 1;
+      }
+    }
+
+    for (var j = 0; j < newArg.length; j++) {
+      
+      _.each(newArg[j], function(item) {
+        if (obj[item]) {
+          obj[item]--;
+        }
+      });
+    }
+  
+    for (var val in obj){
+      if(obj[val] === 1){
+        arg.push(parseInt(val));
+      }
+    }
+    return arg;
   };
+
 
   // Returns a function, that, when invoked, will only be triggered at most once
   // during a given window of time.  See the Underbar readme for extra details
   // on this function.
   //
   // Note: This is difficult! It may take a while to implement.
-  _.throttle = function(func, wait) {
+_.throttle = function(func, wait) {
+    var counter = 0;
+    
+    return function() {
+      if(counter === 0){
+        counter++;
+        func.apply(arguments);
+        setTimeout(function() {
+          counter--;
+        }, wait);
+      }    
+    }  
+  
   };
 }());
+
